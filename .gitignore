@@ -203,6 +203,11 @@ cython_debug/
 # Temporary file for partial code execution
 tempCodeRunnerFile.py
 
+# Reproducible experiment outputs (configuration lives in configs/).
+runs/
+.tools/
+docs/paper/_generated/
+
 # Ruff stuff:
 .ruff_cache/
 

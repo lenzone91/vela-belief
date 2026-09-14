@@ -1,0 +1,27 @@
+# Persistent regimes with overlapping emissions: history carries useful evidence.
+[hmm]
+initial = [0.5, 0.5]
+transition = [[0.97, 0.03], [0.03, 0.97]]
+emission = [[0.7, 0.3], [0.3, 0.7]]
+
+[model]
+embedding_dim = 16
+hidden_dim = 32
+
+[loss]
+belief = 1.0
+prediction = 1.0
+state = 0.0
+
+[training]
+seed = 42
+steps = 800
+batch_size = 64
+sequence_length = 64
+learning_rate = 0.003
+gradient_clip = 1.0
+eval_every = 100
+validation_sequences = 256
+test_sequences = 512
+long_sequence_length = 256
+num_threads = 1

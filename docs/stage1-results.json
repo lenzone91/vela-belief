@@ -1,0 +1,416 @@
+[
+  {
+    "seed": 42,
+    "config": {
+      "hmm": {
+        "initial": [
+          0.5,
+          0.5
+        ],
+        "transition": [
+          [
+            0.97,
+            0.03
+          ],
+          [
+            0.03,
+            0.97
+          ]
+        ],
+        "emission": [
+          [
+            0.7,
+            0.3
+          ],
+          [
+            0.3,
+            0.7
+          ]
+        ]
+      },
+      "model": {
+        "embedding_dim": 16,
+        "hidden_dim": 32
+      },
+      "loss": {
+        "belief": 1.0,
+        "prediction": 1.0,
+        "state": 0.0
+      },
+      "training": {
+        "seed": 42,
+        "steps": 800,
+        "batch_size": 64,
+        "sequence_length": 64,
+        "learning_rate": 0.003,
+        "gradient_clip": 1.0,
+        "eval_every": 100,
+        "validation_sequences": 256,
+        "test_sequences": 512,
+        "long_sequence_length": 256,
+        "num_threads": 1
+      }
+    },
+    "best_step": 500,
+    "versions": {
+      "python": "3.11.2",
+      "torch": "2.14.0+cpu",
+      "vela_belief": "0.1.0"
+    },
+    "parameters": 4964,
+    "test": {
+      "learned": {
+        "belief_kl": 9.644318212270259e-05,
+        "belief_mae": 0.0038292598218529934,
+        "state_accuracy": 0.828155517578125,
+        "state_brier": 0.24587353210695437,
+        "next_observation_kl": 0.000270322406924012,
+        "next_observation_nll": 0.6561182021133375
+      },
+      "exact_filter": {
+        "belief_kl": 1.3870164511289168e-20,
+        "belief_mae": 0.0,
+        "state_accuracy": 0.828094482421875,
+        "state_brier": 0.24588256302340927,
+        "next_observation_kl": 3.218725199566341e-20,
+        "next_observation_nll": 0.6557675132982198
+      },
+      "observation_only": {
+        "belief_kl": 0.21632568246293374,
+        "belief_mae": 0.25374761529003337,
+        "state_accuracy": 0.701751708984375,
+        "state_brier": 0.4185986328124999,
+        "next_observation_kl": 0.02479727794819348,
+        "next_observation_nll": 0.6806855085680884
+      }
+    },
+    "long_test": {
+      "learned": {
+        "belief_kl": 8.743170394710027e-05,
+        "belief_mae": 0.0035518999635191697,
+        "state_accuracy": 0.8328399658203125,
+        "state_brier": 0.24199119310525954,
+        "next_observation_kl": 0.0002706515480515289,
+        "next_observation_nll": 0.6581115960235839
+      },
+      "exact_filter": {
+        "belief_kl": 1.3049601343636565e-20,
+        "belief_mae": 0.0,
+        "state_accuracy": 0.8330535888671875,
+        "state_brier": 0.24197889149322263,
+        "next_observation_kl": 3.3034284942917713e-20,
+        "next_observation_nll": 0.657751689290374
+      },
+      "observation_only": {
+        "belief_kl": 0.22446406995621637,
+        "belief_mae": 0.2610327734219407,
+        "state_accuracy": 0.6962127685546875,
+        "state_brier": 0.42302978515624984,
+        "next_observation_kl": 0.025777303872701912,
+        "next_observation_nll": 0.6823088585910402
+      }
+    },
+    "long_test_tail": {
+      "learned": {
+        "belief_kl": 8.373810294682797e-05,
+        "belief_mae": 0.0034335021724207666,
+        "state_accuracy": 0.8351033528645834,
+        "state_brier": 0.23897964621540269,
+        "next_observation_kl": 0.00026901238935164723,
+        "next_observation_nll": 0.6577162746156127
+      },
+      "exact_filter": {
+        "belief_kl": 1.207021949837378e-20,
+        "belief_mae": 0.0,
+        "state_accuracy": 0.8354593912760416,
+        "state_brier": 0.23896479995206676,
+        "next_observation_kl": 3.049318610115481e-20,
+        "next_observation_nll": 0.6573494895538537
+      },
+      "observation_only": {
+        "belief_kl": 0.2274912380126768,
+        "belief_mae": 0.2635370739803275,
+        "state_accuracy": 0.69610595703125,
+        "state_brier": 0.4231152343749999,
+        "next_observation_kl": 0.026114174621136476,
+        "next_observation_nll": 0.6821809022264581
+      }
+    }
+  },
+  {
+    "seed": 43,
+    "config": {
+      "hmm": {
+        "initial": [
+          0.5,
+          0.5
+        ],
+        "transition": [
+          [
+            0.97,
+            0.03
+          ],
+          [
+            0.03,
+            0.97
+          ]
+        ],
+        "emission": [
+          [
+            0.7,
+            0.3
+          ],
+          [
+            0.3,
+            0.7
+          ]
+        ]
+      },
+      "model": {
+        "embedding_dim": 16,
+        "hidden_dim": 32
+      },
+      "loss": {
+        "belief": 1.0,
+        "prediction": 1.0,
+        "state": 0.0
+      },
+      "training": {
+        "seed": 43,
+        "steps": 800,
+        "batch_size": 64,
+        "sequence_length": 64,
+        "learning_rate": 0.003,
+        "gradient_clip": 1.0,
+        "eval_every": 100,
+        "validation_sequences": 256,
+        "test_sequences": 512,
+        "long_sequence_length": 256,
+        "num_threads": 1
+      }
+    },
+    "best_step": 200,
+    "versions": {
+      "python": "3.11.2",
+      "torch": "2.14.0+cpu",
+      "vela_belief": "0.1.0"
+    },
+    "parameters": 4964,
+    "test": {
+      "learned": {
+        "belief_kl": 0.00026388013626243414,
+        "belief_mae": 0.006177039169678971,
+        "state_accuracy": 0.8251953125,
+        "state_brier": 0.2507625407089292,
+        "next_observation_kl": 0.00031534491497388605,
+        "next_observation_nll": 0.6591886804034621
+      },
+      "exact_filter": {
+        "belief_kl": 1.598774687942492e-20,
+        "belief_mae": 0.0,
+        "state_accuracy": 0.825836181640625,
+        "state_brier": 0.2510211661166902,
+        "next_observation_kl": 4.0657581468206416e-20,
+        "next_observation_nll": 0.658958288499935
+      },
+      "observation_only": {
+        "belief_kl": 0.21538256578683518,
+        "belief_mae": 0.25351987174678037,
+        "state_accuracy": 0.696533203125,
+        "state_brier": 0.4227734374999999,
+        "next_observation_kl": 0.024766691627398224,
+        "next_observation_nll": 0.6826927276847866
+      }
+    },
+    "long_test": {
+      "learned": {
+        "belief_kl": 0.0002721464861869982,
+        "belief_mae": 0.006356306752346115,
+        "state_accuracy": 0.8333206176757812,
+        "state_brier": 0.2394557366202563,
+        "next_observation_kl": 0.00032247463077184334,
+        "next_observation_nll": 0.6560807148409655
+      },
+      "exact_filter": {
+        "belief_kl": 1.3367238698856927e-20,
+        "belief_mae": 0.0,
+        "state_accuracy": 0.833740234375,
+        "state_brier": 0.2392353073369328,
+        "next_observation_kl": 2.0752307207730358e-20,
+        "next_observation_nll": 0.6557080178144385
+      },
+      "observation_only": {
+        "belief_kl": 0.2256555523240366,
+        "belief_mae": 0.26172908352306945,
+        "state_accuracy": 0.6993484497070312,
+        "state_brier": 0.42052124023437487,
+        "next_observation_kl": 0.02586701958356953,
+        "next_observation_nll": 0.6815341830102868
+      }
+    },
+    "long_test_tail": {
+      "learned": {
+        "belief_kl": 0.0002729479277556657,
+        "belief_mae": 0.006402300759385862,
+        "state_accuracy": 0.8353169759114584,
+        "state_brier": 0.23696246694542503,
+        "next_observation_kl": 0.0003222616540412495,
+        "next_observation_nll": 0.6561435801902841
+      },
+      "exact_filter": {
+        "belief_kl": 1.2776080287752364e-20,
+        "belief_mae": 0.0,
+        "state_accuracy": 0.8356424967447916,
+        "state_brier": 0.23674240060353102,
+        "next_observation_kl": 1.976410210260034e-20,
+        "next_observation_nll": 0.6558037275130468
+      },
+      "observation_only": {
+        "belief_kl": 0.22879573488753654,
+        "belief_mae": 0.26432428897213783,
+        "state_accuracy": 0.6981709798177084,
+        "state_brier": 0.4214632161458332,
+        "next_observation_kl": 0.026228413137825684,
+        "next_observation_nll": 0.681835574206381
+      }
+    }
+  },
+  {
+    "seed": 44,
+    "config": {
+      "hmm": {
+        "initial": [
+          0.5,
+          0.5
+        ],
+        "transition": [
+          [
+            0.97,
+            0.03
+          ],
+          [
+            0.03,
+            0.97
+          ]
+        ],
+        "emission": [
+          [
+            0.7,
+            0.3
+          ],
+          [
+            0.3,
+            0.7
+          ]
+        ]
+      },
+      "model": {
+        "embedding_dim": 16,
+        "hidden_dim": 32
+      },
+      "loss": {
+        "belief": 1.0,
+        "prediction": 1.0,
+        "state": 0.0
+      },
+      "training": {
+        "seed": 44,
+        "steps": 800,
+        "batch_size": 64,
+        "sequence_length": 64,
+        "learning_rate": 0.003,
+        "gradient_clip": 1.0,
+        "eval_every": 100,
+        "validation_sequences": 256,
+        "test_sequences": 512,
+        "long_sequence_length": 256,
+        "num_threads": 1
+      }
+    },
+    "best_step": 600,
+    "versions": {
+      "python": "3.11.2",
+      "torch": "2.14.0+cpu",
+      "vela_belief": "0.1.0"
+    },
+    "parameters": 4964,
+    "test": {
+      "learned": {
+        "belief_kl": 0.00017257596709089723,
+        "belief_mae": 0.005506853506375744,
+        "state_accuracy": 0.827392578125,
+        "state_brier": 0.24686017040442934,
+        "next_observation_kl": 9.271339270896363e-05,
+        "next_observation_nll": 0.6555553133998111
+      },
+      "exact_filter": {
+        "belief_kl": 1.514071393217062e-20,
+        "belief_mae": 0.0,
+        "state_accuracy": 0.828033447265625,
+        "state_brier": 0.246714027537138,
+        "next_observation_kl": 2.371692252312041e-20,
+        "next_observation_nll": 0.6554208887186136
+      },
+      "observation_only": {
+        "belief_kl": 0.21623500463353681,
+        "belief_mae": 0.2539434671758643,
+        "state_accuracy": 0.702880859375,
+        "state_brier": 0.4176953124999999,
+        "next_observation_kl": 0.024782838920801076,
+        "next_observation_nll": 0.6806300094220046
+      }
+    },
+    "long_test": {
+      "learned": {
+        "belief_kl": 0.00017897303086924544,
+        "belief_mae": 0.005531995763431465,
+        "state_accuracy": 0.833770751953125,
+        "state_brier": 0.24083007895296574,
+        "next_observation_kl": 8.182659069254113e-05,
+        "next_observation_nll": 0.6563238080754461
+      },
+      "exact_filter": {
+        "belief_kl": 1.7575933655526732e-20,
+        "belief_mae": 0.0,
+        "state_accuracy": 0.8335494995117188,
+        "state_brier": 0.24079480637478104,
+        "next_observation_kl": 3.006966962752766e-20,
+        "next_observation_nll": 0.656216383686137
+      },
+      "observation_only": {
+        "belief_kl": 0.22502388038017246,
+        "belief_mae": 0.26128569290973314,
+        "state_accuracy": 0.7001266479492188,
+        "state_brier": 0.41989868164062494,
+        "next_observation_kl": 0.025806372105392196,
+        "next_observation_nll": 0.6821608608681499
+      }
+    },
+    "long_test_tail": {
+      "learned": {
+        "belief_kl": 0.0001790338833153732,
+        "belief_mae": 0.0055012996645930415,
+        "state_accuracy": 0.8344930013020834,
+        "state_brier": 0.2399269824469441,
+        "next_observation_kl": 8.013393164253185e-05,
+        "next_observation_nll": 0.6560230637086343
+      },
+      "exact_filter": {
+        "belief_kl": 1.810532924756067e-20,
+        "belief_mae": 0.0,
+        "state_accuracy": 0.834228515625,
+        "state_brier": 0.2398984081334503,
+        "next_observation_kl": 2.6540365680634743e-20,
+        "next_observation_nll": 0.6558994685691731
+      },
+      "observation_only": {
+        "belief_kl": 0.22836162751835984,
+        "belief_mae": 0.26407871417995543,
+        "state_accuracy": 0.69989013671875,
+        "state_brier": 0.4200878906249999,
+        "next_observation_kl": 0.026181851766120312,
+        "next_observation_nll": 0.6819866552151647
+      }
+    }
+  }
+]
