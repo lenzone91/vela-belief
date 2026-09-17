@@ -18,8 +18,8 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install Python documentation dependencies
-        run: python -m pip install --upgrade pip && python -m pip install -e '.[docs]'
+      - name: Install documentation dependencies
+        run: python -m pip install --upgrade pip && python -m pip install 'sphinx>=8,<9' 'matplotlib>=3.9,<4'
 
       - name: Install LaTeX toolchain
         run: |
