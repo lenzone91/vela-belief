@@ -16,5 +16,8 @@ article-html:
 article-latex:
 	$(SPHINX) -M latex docs/paper docs/_build $(SPHINXOPTS)
 
+article-pdf:
+	$(SPHINX) -M latexpdf docs/paper docs/_build $(SPHINXOPTS)
+
 article: article-latex
 	cd docs/_build/latex && TECTONIC_CACHE_DIR="$(CURDIR)/.cache/tectonic" "$(TECTONIC)" --keep-logs vela-belief.tex

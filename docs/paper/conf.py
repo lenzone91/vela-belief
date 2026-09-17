@@ -8,11 +8,11 @@ SOURCE = Path(__file__).resolve().parent
 os.environ.setdefault("MPLCONFIGDIR", str(SOURCE.parents[1] / ".cache" / "matplotlib"))
 sys.path.insert(0, str(SOURCE))
 
-project = "VELA-Belief: Learning Persistent Latent Belief States"
+project = "VELA-Belief: Toward Bounded, Structured and Evolving Latent Memory"
 author = "VELA project"
 copyright = "2026, VELA project"
-release = "Stage 1 working draft"
-today = "Stage 1 working draft"
+release = "Research design and stage 1 results"
+today = "September 2026 — research design and stage 1 results"
 language = "en"
 root_doc = "index"
 exclude_patterns = ["sections/**", "_generated/**"]
@@ -41,14 +41,16 @@ latex_elements = {
     "sphinxsetup": "iconpackage=none",
     "preamble": r"\usepackage{microtype}",
     "maketitle": r"\maketitle",
-    "tableofcontents": "",
+    "tableofcontents": r"\setcounter{tocdepth}{2}\tableofcontents\clearpage",
 }
 
 
 def generate_results(app):
+    from diagrams import generate as generate_diagrams
     from results import generate
 
     generate(Path(app.srcdir))
+    generate_diagrams(Path(app.srcdir))
 
 
 def setup(app):

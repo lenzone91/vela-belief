@@ -1,3 +1,5 @@
+.. _stage1:
+
 Stage 1: discrete hidden-state inference
 ------------------------------------------------
 
@@ -31,6 +33,25 @@ The implementation uses float64 log-space normalization to support long,
 unlikely sequences and structural zeros. Impossible sequences raise an error.
 The reference probabilities :math:`q_t` provide an additional check on the
 learned next-observation distribution.
+
+For intuition, suppose the first observation is symbol 0. Starting from equal
+prior probabilities, Bayes' rule gives :math:`b_0=(0.7,0.3)`: the observation
+favors state 0 but does not identify it with certainty. Before the next
+observation, the transition model moves this belief to
+:math:`\bar b_1=(0.688,0.312)`. If symbol 0 is observed again,
+
+.. math::
+
+   b_1(0)=\frac{0.688\times0.7}
+   {0.688\times0.7+0.312\times0.3}\approx0.8373.
+
+The second observation is identical to the first, but the answer changes
+because the filter retained earlier evidence. A current-observation-only
+predictor with the stationary prior would again return 0.7. This arithmetic
+example explains what the recurrent model is trained to reproduce; it is not
+an additional experimental result. The nonzero transition probability also
+prevents repeated evidence from justifying an assumption that the regime can
+never change.
 
 We also evaluate an observation-only oracle. It computes
 :math:`P(S_t\mid O_t)` from the unconditional marginal :math:`\pi A^t` and

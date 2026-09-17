@@ -1,18 +1,45 @@
 # VELA-Belief
 
-**Learning a compact, persistent memory of what matters in a sequence.**
+**Learning a bounded, persistent memory that organizes what matters for future prediction.**
 
-VELA-Belief explores how a model can summarize past observations in a latent state that is updated as new information arrives. The aim is to retain what is useful for inference, prediction, and eventually decision-making, without reprocessing the full history at every step.
+VELA-Belief studies how a model can maintain an evolving latent state from a stream of observations. The proposed memory contains a fixed number of slots: new information is routed to relevant slots, existing information is updated, new factors receive space, redundant representations can be consolidated, and low-value information can be forgotten.
 
-It is the first research module of **VELA — Value-Aware Evolving Latent Agent**.
+The central question is:
 
-The approach is intended to be general-purpose: the same principle could support hidden-state estimation, **LLM context compression**, or the memory component of a **world model**. The first experiments focus on small synthetic systems where the information the model should remember can be measured precisely.
+> Can a bounded memory preserve useful information over long horizons by learning how to organize, revise, and consolidate it according to its future predictive value?
 
-**Status:** stage 1 is implemented: a categorical Hidden Markov Model (HMM), an exact Bayesian filter, and a trainable single-vector recurrent model. Structured memory, language tasks, and world models remain research directions.
+This is the memory and belief component of **VELA — Value-Aware Evolving Latent Agent**. “Value-aware evolving latent memory” describes the revised research direction developed in [patch.md](patch.md).
 
-## Run the first experiment
+**Current status:** only **stage 1** is implemented: a categorical Hidden Markov Model (HMM), an exact Bayesian filter, an observation-only oracle, and a trainable single-vector GRU. Slots, sparse routing, allocation, merging, forgetting, LLM integration, and world-model rollouts are proposed experiments. The current results validate the starting benchmark; they do not validate the proposed structured memory.
+
+## Read the research article
+
+The [expanded paper](docs/paper/index.rst) develops the problem, the reasoning behind the design, related literature, mathematical objectives, application interfaces, existing results, and a detailed nine-stage research map. It combines explanatory text, equations, comparison tables, and original diagrams, with a table of contents in HTML and PDF.
+
+Useful entry points:
+
+- [Motivation and scope](docs/paper/sections/introduction.rst): why memory needs identity, revision, uncertainty, and selective retention.
+- [Related work](docs/paper/sections/related_work.rst): Memformer, recurrent memory, ICAE, AutoCompressors, KV compression, object-centric models, and the intended contribution.
+- [Memory lifecycle](docs/paper/sections/memory.rst) and [learning objectives](docs/paper/sections/objectives.rst): mechanisms, equations, implementation choices, and failure modes.
+- [LLM overflow](docs/paper/sections/llm.rst) and [world models](docs/paper/sections/world_models.rst): distinct interfaces and evaluation requirements.
+- [Evaluation](docs/paper/sections/evaluation.rst) and [nine-stage roadmap](docs/paper/sections/roadmap.rst): hypotheses, comparisons, dependencies, deliverables, and decision criteria.
+
+The documents remain in English, consistently with the existing repository. To build them after creating the environment below:
+
+```bash
+python -m pip install -e '.[docs]'
+make article-html    # docs/_build/html/index.html
+make article-latex   # docs/_build/latex/vela-belief.tex
+make article         # docs/_build/latex/vela-belief.pdf; requires Tectonic
+```
+
+See [article build and editing instructions](docs/paper/README.md). Result tables and plots are regenerated from the archived numerical snapshot; conceptual diagrams are generated separately and contain no experimental results.
+
+## Run the implemented experiment
 
 Requires Python 3.11 or newer. The default benchmark runs on CPU.
+
+An existing environment can be used with `mamba activate vela`. Otherwise, create a virtual environment:
 
 ```bash
 python3 -m venv .venv
@@ -24,184 +51,151 @@ vela-belief train --config configs/hmm.toml --output runs/hmm-first
 pytest
 ```
 
-On Debian, if virtual-environment creation reports that `ensurepip` is unavailable, install the matching `python3-venv` package first.
-
-The run directory contains the resolved configuration, training history, best validation checkpoint, test metrics, and an example posterior trace. Each run requires a new output directory. To reproduce the saved model's evaluation:
+On Debian, if virtual-environment creation reports that `ensurepip` is unavailable, install the matching `python3-venv` package first. Each training or evaluation command requires a new output directory.
 
 ```bash
 vela-belief evaluate --checkpoint runs/hmm-first/checkpoint.pt --output runs/hmm-first-eval
 ```
 
-Change the HMM, latent size, loss weights, or training budget in [configs/hmm.toml](configs/hmm.toml). Use `--seed 43` to run a different seed. `python -m vela_belief` also works in place of `vela-belief`.
+A run records its resolved configuration, training history, selected inference checkpoint, test metrics, and an example posterior trace. Adjust the environment, latent dimension, loss weights, or training budget in [configs/hmm.toml](configs/hmm.toml); use `--seed 43` for another configured run. `python -m vela_belief` also works in place of `vela-belief`.
 
-The initial model is `Embedding → GRU → belief and next-observation heads`. Its encoder, memory, and heads are independent components; memory state is passed explicitly for streaming and chunked inference. See the [architecture and experiment protocol](docs/architecture.md) and [stage 1 results](docs/stage1-results.md).
+The initial model is `Embedding → GRU → belief and next-observation heads`. The encoder, memory, and heads are independent components; the caller passes memory state explicitly for streaming and chunked inference. See the [implementation architecture](docs/architecture.md) and [stage 1 results](docs/stage1-results.md).
 
-## Research article
+## Why maintain a state instead of retaining a history?
 
-The [working article](docs/paper/index.rst) develops the context, mathematical formulation, stage 1 experiments, and prospective protocols for stages 2–6. Sphinx generates HTML and LaTeX from the same source, with tables and a figure derived from the archived results.
+In a partially observable system, one observation often leaves several explanations possible. History helps distinguish them. A noisy sensor can reveal a persistent regime through repeated measurements; a conversation can describe one entity across distant passages; an object can remain relevant while out of view.
 
-```bash
-.venv/bin/python -m pip install -e '.[docs]'
-make article-html    # docs/_build/html/index.html
-make article         # docs/_build/latex/vela-belief.pdf (requires Tectonic)
+Consider a red car owned by Alice. A later observation says the car is electric; another says it was sold to Bob. Useful memory should bind the first two facts, revise current ownership, distinguish historical from current information, and preserve uncertainty if the sources disagree. An exact vehicle identifier may need a separate storage policy. These demands motivate a memory that can reorganize information, beyond simply keeping recent tokens.
+
+The initial formulation uses one recurrent vector:
+
+$$
+x_t=E_\theta(o_t),\qquad z_t=U_\theta(z_{t-1},x_t).
+$$
+
+The proposed formulation makes the state structured:
+
+$$
+M_t=[m_t^1;\ldots;m_t^K]\in\mathbb R^{K\times d_m}.
+$$
+
+There are at most $K$ occupied slots, each with width $d_m$. Their payload is bounded independently of history length; metadata, projected reader state, and any episodic archive must also be counted. Finite memory cannot retain arbitrary amounts of independent information exactly. The goal is to preserve useful predictions under an explicit budget.
+
+## Proposed memory lifecycle
+
+```mermaid
+flowchart TD
+    O[New observation or evicted text block] --> E[Encode]
+    E --> R[Route to relevant slots or choose a new slot]
+    M[Previous bounded memory] --> R
+    R --> U[Update existing slots or allocate]
+    U --> C[Consolidate redundant representations when needed]
+    C --> F[Forget or replace low-value information when needed]
+    F --> N[Updated bounded memory]
+    N --> D[Read for belief, prediction, or downstream use]
+    N -. Next update .-> M
 ```
 
-See [article build and editing instructions](docs/paper/README.md) for the LaTeX source, compiler setup, and how to extend the paper.
-
-## Why persistent memory?
-
-In a partially observable system, the latest observation rarely tells the whole story. A model needs information from earlier observations to estimate what is happening now.
-
-For example, a noisy measurement may be ambiguous on its own, while a sequence of measurements can reveal the underlying regime. The goal is to learn a memory that preserves this useful evidence and updates it over time.
-
-The central research question is:
-
-> Can a compact latent state retain the information from the past needed to estimate hidden state and predict what comes next?
-
-## How it works
-
-The initial model has three components: an observation encoder, a recurrent memory update, and a task-specific decoder.
-
-At time $t$, it receives an observation $o_t$ and updates its memory:
-
-$$
-x_t = E_\theta(o_t), \qquad z_t = U_\theta(z_{t-1}, x_t).
-$$
-
-Here, $x_t$ is the encoded observation and $z_t \in \mathbb{R}^{d_z}$ is the persistent latent state. Starting from an initial state $z_{-1}$, the model processes observations one at a time. A decoder then uses $z_t$ to estimate a hidden state, represent uncertainty, or predict a future observation.
-
-The latent dimension $d_z$ controls the size of the memory. The model must learn what to incorporate, preserve, update, or forget within that budget. A fixed-size state does not guarantee that all useful information can be retained over arbitrary sequences; measuring this tradeoff is part of the project.
-
-This first version uses **one latent vector**. Later experiments may replace it with multiple memory slots:
-
-$$
-M_t = U_\theta(M_{t-1}, x_t), \qquad z_t = f_\theta(M_t),
-$$
-
-where $M_t \in \mathbb{R}^{K \times d_m}$ contains $K$ slots and $f_\theta$ reads them into a downstream representation. Attention, gated writes, slot specialization, and learned forgetting are possible extensions.
-
-Persistent state is also used by GRUs and LSTMs. The research question is whether the proposed memory structure and training objectives provide measurable benefits over these established recurrent models.
-
-## What is a belief state?
-
-A **belief state** is a probability distribution over the hidden state of a system, given the observations so far. For the initial experiments, which do not involve actions:
-
-$$
-b_t(s) = P(S_t = s \mid o_{0:t}),
-$$
-
-where $S_t$ is the hidden state and $o_{0:t}$ is the observation history through time $t$.
-
-This distribution describes both what the model believes and how uncertain it is. Under the assumed state-space model, it summarizes the history needed for predicting the system's future.
-
-VELA-Belief learns a latent vector $z_t$, rather than storing this distribution explicitly. A belief decoder makes the hypothesis testable:
-
-$$
-\hat b_t = D_\theta(z_t) \approx b_t.
-$$
-
-For a discrete system, the decoder outputs probabilities over the possible hidden states. The latent vector itself does not need to have the same dimension or interpretation as that distribution.
-
-The aim is to preserve information about the posterior, including uncertainty, rather than only predict the most likely hidden state. Whether the learned representation does this reliably is an experimental question.
-
-## First benchmarks
-
-The project starts with controlled environments that make hidden-state inference easy to evaluate.
-
-| Environment | What is hidden? | Reference |
+| Operation | Purpose | Main question |
 | --- | --- | --- |
-| **Hidden Markov Model (HMM)** | A discrete state that evolves according to Markov transition probabilities and generates observations | Exact Bayesian filtering with known model parameters |
-| Linear Gaussian state-space model | A continuous state observed through noisy measurements | Kalman filtering with known parameters and a Gaussian initial state |
-| Regime-switching stochastic process | A regime that changes the observed dynamics | Known simulated regimes; a reference filter where tractable |
-| Stochastic volatility process | A time-varying volatility state | Known simulated volatility; approximate filtering where needed |
+| **Route** | Identify relevant occupied slots, with sparse writes to at most $r\ll K$ rows. | Does routing find the right information without collapsing onto one row? |
+| **Update** | Integrate evidence into an existing persistent unit using a gated or attention-based write. | Can it revise one factor without damaging unrelated information? |
+| **Allocate** | Create a unit for information not adequately represented. | Can it distinguish a new factor from another mention of an existing one? |
+| **Consolidate** | Combine complementary or redundant units and release capacity. | Are future predictions preserved after one merge and many repeated merges? |
+| **Forget** | Delete or replace information with low expected future utility. | Can it retain rare but important facts while adapting to real changes? |
 
-The implemented first benchmark is a minimal **Hidden Markov Model** with categorical observations. Its exact posterior provides a direct target for checking whether a learned memory approximates Bayesian filtering. The other environments are planned extensions.
+A slot is intended to become a useful unit of state, potentially an entity, relation, goal, regime, or constraint. Human-readable concepts are not guaranteed. Sparse writes and predictive learning may encourage specialization; controlled probes and interventions must establish whether it actually occurs.
 
-Synthetic hidden states and reference posteriors may be used as training targets or for evaluation. They are not inputs to the observation-driven memory update.
+Consolidation differs from deletion: two car-related slots could combine complementary attributes instead of losing one set. Geometric similarity alone is insufficient to establish redundancy. The proposed test compares predictions before and after a merge over relevant future queries. Similarly, normalized attention alone is insufficient to detect novelty: even poor matches must receive some softmax mass.
 
-## Training and evaluation
+## What the memory learns to preserve
 
-The HMM experiment supports three training signals, separately or in combination:
-
-- **Next-observation prediction:** learn a predictive distribution $p_\theta(o_{t+1} \mid z_t)$ by minimizing negative log-likelihood.
-- **Hidden-state estimation:** predict the simulated hidden state using a classification or regression loss.
-- **Belief matching:** match the reference posterior, for example by minimizing $D_{\mathrm{KL}}(b_t \Vert \hat b_t)$ for a discrete HMM.
-
-Later experiments may add memory regularization to encourage sparse slot use or control memory allocation.
-
-Evaluation will measure:
-
-- hidden-state estimation accuracy and posterior quality, including uncertainty;
-- predictive performance on held-out sequences;
-- retention of information over long horizons;
-- quality versus memory size and computational cost;
-- robustness to longer sequences, increased noise, and changes in system dynamics.
-
-Stage 1 uses a GRU and compares it with the exact Bayesian filter and an observation-only reference that forgets past observations. Both references know the HMM parameters; the neural model receives only observations, with exact beliefs available as training targets.
-
-Future baselines will include fixed-window MLPs, LSTMs, causal Transformers with a defined context budget, and simple recurrent state-space models. Kalman filtering will provide a reference for linear Gaussian systems. The information available to each model must remain explicit in comparisons.
-
-## Potential applications
-
-The general-purpose ambition concerns the **memory formulation**: encode new information, update a persistent state, and decode what a task needs. Different domains will require suitable encoders, decoders, and training objectives. A single model that transfers across these domains has not yet been demonstrated.
-
-### LLM context compression
-
-A possible extension is to encode tokens, text chunks, or LLM representations into a persistent latent memory. An LLM could then condition on a readout of that memory alongside recent text, rather than repeatedly processing the entire conversation or document.
-
-This would be a form of **learned, task-dependent context compression**. Experiments would need to test which facts, relationships, and instructions survive compression, how reliably they can be retrieved, and whether the memory reduces computation at acceptable quality.
-
-The current belief-state experiments provide a controlled way to study information retention. They do not yet establish performance on language tasks or lossless recovery of the original context.
-
-### World models
-
-A world model needs a representation of the current situation and a model of how it may evolve. VELA-Belief could provide the first component: a latent state inferred from partial observations.
-
-An extension could add action-conditioned latent dynamics:
+For an action-free hidden-state system, the belief is
 
 $$
-p_\phi(z_{t+1} \mid z_t, a_t),
+b_t(s)=P(S_t=s\mid o_{0:t}).
 $$
 
-along with observation and, where relevant, reward decoders. For environments without actions, the transition model would condition only on $z_t$.
+Under the known state-space model, this distribution summarizes the history needed for future prediction and represents uncertainty. Stage 1 trains a decoder $\hat b_t=D_\theta(z_t)$ to approximate the exact HMM posterior. Hidden states and reference beliefs are training targets or evaluation data, never inputs to the memory update.
 
-In an action-driven setting, the memory update would also receive the previous action, and the reference belief would become $P(S_t \mid o_{0:t}, a_{0:t-1})$. This keeps state inference consistent with the agent's interaction history.
+The implemented objectives support next-observation likelihood, posterior KL matching, and optional hidden-state supervision. The archived runs combine belief matching and next-observation prediction. Later slot experiments may add sparsity, persistence, diversity, merge consistency, and capacity penalties. These are hypotheses to ablate: excessive persistence can prevent correction, and excessive diversity can separate related information artificially.
 
-Such a model could support future-state prediction and eventually planning. Learning a useful belief representation is a first step; reliable rollouts and decision-making require separate training and evaluation.
+For tasks without an exact posterior, the broader target is
+
+$$
+p(Y_{\mathrm{future}}\mid H_t,Q)
+\approx p_\theta(Y_{\mathrm{future}}\mid M_t,Q),
+$$
+
+where $H_t$ is available history and $Q$ specifies the future question or prediction task. What is worth remembering depends on that task distribution. Good average prediction does not guarantee exact recall of a rarely queried identifier.
+
+## LLM overflow memory
+
+The proposed LLM integration keeps ordinary Transformer context until old content must be evicted. At overflow event $n$, VELA folds only the evicted block into its persistent state:
+
+$$
+M_n=U_\theta(M_{n-1},E_\theta(X_{\mathrm{evicted},n})).
+$$
+
+The reader then consumes projected memory alongside recent verbatim text:
+
+$$
+[P_\theta(M_n),X_{\mathrm{recent}}],\qquad P+W+G\le C.
+$$
+
+Here $P$ counts projected memory tokens, $W$ recent and pinned text, $G$ reserved generation space, and $C$ the context limit. One token per slot gives $P=K$. The writer updates at eviction events; the LLM can read the resulting memory between those events.
+
+Two prospective interfaces are:
+
+- **VELA-S:** soft tokens projected into the embedding space of a potentially frozen LLM. Train the writer and projection using full-context teacher distributions on sequences that fit the teacher's window.
+- **VELA-KV:** project semantic slots directly into layer-specific keys and values. This requires additional cache and positional integration and a separate accounting of projected KV storage.
+
+A changed memory prefix can invalidate cached activations of the retained suffix, even though its tokens remain verbatim. The first prototype should re-prefill that suffix and measure the cost. A frozen reader still requires differentiable embedding access during adapter training; compatibility with an arbitrary LLM or text-only API is not established.
+
+A bounded episodic component could retain exact strings alongside semantic slots. Its storage, retrieval cost, and any backing archive count toward the total budget. The decisive stress test is **repeated consolidation**: whether facts, instructions, revisions, and uncertainty survive many overflow events, not only one compression.
+
+## Structured state for world models
+
+In an interactive environment, inference also consumes the previous action:
+
+$$
+M_t=U_\theta(M_{t-1},E_\theta(o_t),a_{t-1}).
+$$
+
+A later world model would add action-conditioned latent dynamics, observation decoding, and where relevant reward prediction. Persistent slots could track occluded objects, relationships, or latent regimes, potentially alongside a stochastic innovation variable.
+
+Inference with a real observation and imagination without that observation are different operations. Accurate belief decoding alone does not establish valid multi-step rollouts. The planned path starts with Kalman-reference continuous systems, then partially observed multi-entity environments, then calibrated rollouts and controlled planning comparisons.
+
+## Position in the literature
+
+Persistent memory, learned addressing, and latent compression have substantial precedents. [Memformer](https://arxiv.org/abs/2010.06891) already uses external memory slots; [Recurrent Memory Transformer](https://arxiv.org/abs/2207.06881) passes memory tokens across segments. [ICAE](https://arxiv.org/abs/2307.06945) learns compact memory vectors, while [AutoCompressors](https://aclanthology.org/2023.emnlp-main.232/) already performs recursive compression. [LoCoCo](https://arxiv.org/abs/2406.05317) and [DMC](https://arxiv.org/abs/2403.09636) combine KV representations rather than merely deleting entries.
+
+VELA's intended contribution is to study a complete slot lifecycle under predictive constraints, with explicit tests of organization, sparse updates, and consolidation stability. The [related-work section](docs/paper/sections/related_work.rst) also covers filtering, NTM/DNC, Compressive Transformer, Activation Beacon, Titans, selective state-space models, Slot Attention, SlotFormer, and world models. No advantage over these methods has yet been demonstrated.
 
 ## Experimental roadmap
 
-1. **Minimal HMM — implemented:** synthetic environment, exact Bayesian filter, and single-vector recurrent model, with belief reconstruction, prediction, and longer-sequence evaluation.
-2. **Structured memory:** introduce multiple slots and compare them with the single-vector model and recurrent baselines under comparable memory budgets.
-3. **Learned forgetting:** test whether explicit replacement or deletion improves retention and adaptation.
-4. **Continuous hidden states:** extend evaluation to linear Gaussian systems and stochastic volatility.
-5. **Representation analysis:** use probes, ablations, and temporal interventions to examine what the memory retains and how it represents uncertainty.
-6. **Latent dynamics and broader tasks:** test whether the learned state supports transition modelling, then explore world models and LLM context compression with dedicated benchmarks.
+| Stage | Addition | Evidence sought |
+| --- | --- | --- |
+| **1 — implemented** | Single-vector HMM belief baseline. | Exact-reference correctness and posterior approximation. |
+| **2** | Structured slot memory. | Quality versus GRU/LSTM and dense attention at comparable budgets. |
+| **3** | Sparse routing and specialization. | Selective writes, intervention evidence, measured cost. |
+| **4** | Allocation and learned forgetting. | Retention of delayed facts, adaptation, capacity handling. |
+| **5** | Consolidation and merge. | Recovered capacity and limited cumulative predictive loss. |
+| **6** | Representation pressures. | Ablations of sparsity, persistence, diversity, merge, and budget losses. |
+| **7** | Structured world-model state. | Continuous beliefs, uncertainty, rollouts, then planning. |
+| **8** | Frozen-LLM overflow / VELA-S. | Repeated-overflow retention with recent text kept verbatim. |
+| **9** | Layer-aware integration / VELA-KV. | Quality and total latency/memory versus soft tokens and KV methods. |
 
-Success means demonstrating that the learned state preserves useful hidden-state information, approaches reference filtering quality on tractable systems, and offers measurable benefits in prediction, retention, or efficiency. Benefits from memory slots and explicit forgetting must be established through comparisons and ablations.
+Stages 7 and 8 form separate application branches after the shared memory study; stage 9 depends on stage 8. Continuous-state benchmarks and representation analysis remain cross-cutting tracks. The [detailed map](docs/paper/sections/roadmap.rst) specifies comparisons, dependencies, deliverables, and failure criteria for every stage.
+
+Success is measured jointly through **predictive quality, memory, compute, stability, and specialization**. State size, parameter count, training budget, recent context, and projected KV storage must be explicit. Sparse writes do not remove dense routing cost, and bounded inference state does not imply bounded training activation storage.
+
+The current three HMM runs have overlapping seed offsets across experiments and are not independent statistical replications. Their longer-sequence evaluation checks continued filtering, not isolated recall of ancient information. Future experiments require independent streams, matched learned baselines, capacity pressure, delayed queries, and uncertainty estimates that respect temporal dependence.
 
 ## The broader VELA project
 
-VELA explores the path from observation history to decisions under uncertainty:
-
 ```text
-Observation history → Latent belief state → Stochastic dynamics → Decision
+Observation history → Structured belief → Stochastic dynamics → Decision
 ```
 
-The tentative module roadmap is:
-
-```text
-vela-belief
-    ↓
-vela-american
-    ↓
-vela-battery
-    ↓
-vela-multienv
-    ↓
-vela-decision
-    ↓
-vela-foundation
-```
-
-Later modules are intended to explore optimal stopping, stochastic control, decision-aware representations, and cross-environment pretraining. VELA-Belief establishes the foundation by asking what a model needs to remember and how to verify that it has learned to do so.
+The tentative module sequence remains `vela-belief → vela-american → vela-battery → vela-multienv → vela-decision → vela-foundation`, covering later optimal stopping, stochastic control, decision-aware representations, and cross-environment pretraining. The nine stages above develop the memory component; those broader modules remain separate future work.

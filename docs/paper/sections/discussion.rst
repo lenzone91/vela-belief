@@ -1,25 +1,70 @@
-Discussion and current conclusion
------------------------------------------
+.. _discussion:
 
-Stage 1 establishes a working posterior-learning baseline with explicit numerical
-and causal checks. A small supervised GRU reproduces the belief of a fixed
-two-state HMM closely and uses history more effectively than an observation-only
-oracle. The modular implementation makes this result a starting point for
-comparisons, rather than evidence for a particular future memory design.
+Discussion: what would make this memory useful?
+------------------------------------------------
 
-Several limitations constrain interpretation. The tested HMM has only one free
-posterior probability, whereas the recurrent vector has 32 coordinates. This is
-compression relative to an observation history of growing length, not evidence
-of a smaller representation than the exact belief. No minimal-capacity result is
-claimed. There is no parameter-distribution shift, learned fixed-window baseline,
-unsupervised training result, or independent multi-seed uncertainty estimate.
-The model is trained to decode an exact teacher posterior, and its long-sequence
-evaluation does not isolate retention of very old evidence.
+The conceptual change is from storing a compact trace to maintaining a bounded
+state whose units can be reorganized. This perspective connects Bayesian
+filtering, learned context compression, and structured world modeling. Its
+appeal is that repeated evidence could enrich an existing unit rather than
+consume another permanent record, while consolidation could recover capacity
+without discarding all the information in one row. Its difficulty is that
+identity, future usefulness, and redundancy are themselves uncertain quantities
+that must be learned.
 
-Before drawing broader conclusions, subsequent stages should use disjoint
-experiment-level data streams, additional parameter settings, matched baselines,
-and sequence-level uncertainty estimates that respect temporal dependence.
-The final paper should integrate all six stages around a single question: under
-what conditions does persistent latent memory preserve useful uncertainty about
-the hidden state, and at what cost? At present, only the controlled first step
-has been demonstrated.
+What the current evidence establishes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Stage 1 supplies a functioning supervised posterior-learning benchmark. A small
+GRU approximates the exact filter on a fixed two-state HMM, uses history more
+effectively than an observation-only oracle, and remains accurate on tested
+sequences longer than its training horizon. Its 32-coordinate state is much
+larger than the one free probability of the exact posterior. The experiment
+therefore establishes neither minimal memory nor an advantage of structured
+storage. It also does not isolate retention of very old evidence, since the
+mixing HMM can itself forget distant observations.
+
+The reported runs use overlapping seed offsets across experiments, so their
+variation cannot provide independent statistical uncertainty. There is no
+implemented slot controller, merge operator, LLM adapter, or world-model rollout
+in the current repository. The paper's architecture and application sections
+are explicit proposals for those components.
+
+Failure modes that shape the design
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A sparse router can collapse onto one row. A persistence loss can freeze stale
+facts. A diversity penalty can separate representations that should share
+information. A merge can conflate two similar entities, and a consistency loss
+can fail to notice because the reader ignores the damaged attribute. A utility
+predictor can favor frequent queries while losing rare instructions. An LLM
+adapter can preserve perplexity while failing exact retrieval. A world model
+can produce convincing short rollouts while being miscalibrated under a new
+action policy. These are concrete outcomes for the experiments, not exceptions
+to a presumed successful architecture.
+
+A bounded memory also needs a bounded claim. It can be updated for arbitrarily
+many steps without increasing its slot count, but this does not mean it retains
+arbitrarily much information or remains accurate indefinitely. Compression is
+relative to tasks, precision, and changing distributions. If an application
+needs a complete auditable history, an additional archive is a different system
+component with its own storage budget.
+
+What would constitute an advance
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The strongest result would locate a reproducible region of the quality,
+memory, compute, and stability tradeoff where structured maintenance is useful,
+and explain the mechanism through controlled interventions. It might show that
+sparse writes protect independent factors, that learned merging helps under
+redundancy and capacity pressure, or that a frozen reader can exploit repeated
+memory updates at a worthwhile total cost. These gains need not occur together
+or in every domain.
+
+A careful negative result is informative too. If a matched GRU or recurrent
+compressor performs as well, if merging fails after many events, or if re-prefill
+erases latency savings, the simplest supported system should be preferred.
+The project's scientific contribution should be the evidence and the resulting
+understanding of memory organization, rather than the number of mechanisms
+included. The next concrete step is stage 2: a minimal slot baseline on tasks
+with enough independent information to make structure testable.

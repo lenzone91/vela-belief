@@ -1,5 +1,9 @@
-Problem and model
--------------------------
+Implemented baseline: recurrent posterior learning
+--------------------------------------------------
+
+This section returns to the implemented stage 1 model. The structured-memory
+operations and regularizers above are prospective and are not used to produce
+the archived results.
 
 Belief as a measurable memory target
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

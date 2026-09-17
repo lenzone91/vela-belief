@@ -23,6 +23,14 @@ make article
 
 The Makefile uses `.venv/bin/python`. Override it with `PYTHON=python` if using another environment. Sphinx warnings fail the build. CI checks HTML and LaTeX generation; the PDF must also be compiled when changing article layout or LaTeX configuration.
 
+With the project's existing Mamba environment:
+
+```bash
+mamba activate vela
+make article-html article-latex PYTHON=python
+make article PYTHON=python
+```
+
 Install [Tectonic](https://tectonic-typesetting.github.io/en-US/install.html) on your `PATH`, or place its binary at `.tools/tectonic`. An alternative location can be passed as `make article TECTONIC=/absolute/path/to/tectonic`. The local setup was verified with Sphinx 8.2.3 and Tectonic 0.17.0, using the official Linux x86-64 musl release. Its archive SHA-256 is:
 
 ```text
@@ -42,16 +50,27 @@ If a full TeX Live installation with XeLaTeX and latexmk is already available, t
 | File | Purpose |
 | --- | --- |
 | `sections/abstract.rst` | Current contribution and manuscript status |
-| `sections/introduction.rst` | Motivation, scope, and selected related work |
-| `sections/method.rst` | Belief definition, model, and training objective |
+| `sections/introduction.rst` | Problem, running example, design progression, and claim status |
+| `sections/related_work.rst` | Original-paper comparisons and intended contribution |
+| `sections/foundations.rst` | Notation, belief sufficiency, predictive compression, and capacity |
+| `sections/memory.rst` | Routing, update, allocation, consolidation, forgetting, and pseudocode |
+| `sections/objectives.rst` | Learning pressures, optimization, and failure modes |
+| `sections/llm.rst` | Overflow, VELA-S, frozen-reader distillation, cache consistency, VELA-KV, episodic memory |
+| `sections/world_models.rst` | Filtering versus imagination, stochastic state, continuous references, and planning |
+| `sections/method.rst` | Implemented GRU baseline and its training objective |
 | `sections/stage1.rst` | HMM protocol, results, tests, and reproducibility |
-| `sections/roadmap.rst` | Prospective methods and evaluation for stages 2–6 |
+| `sections/evaluation.rst` | Hypotheses, tasks, baselines, resource accounting, and statistical protocol |
+| `sections/roadmap.rst` | Nine stages, dependencies, comparisons, deliverables, and decision criteria |
 | `sections/discussion.rst` | Limitations and current conclusion |
+| `sections/glossary.rst` | Definitions and coverage of the 40 topics in `patch.md` |
 | `sections/references.rst` | Cited sources |
 | `results.py` | Generate tables and a vector figure from `../stage1-results.json` |
+| `diagrams.py` | Generate four original conceptual diagrams as SVG and PDF |
 | `conf.py` | Sphinx settings and LaTeX article layout |
 
 The figure and tables are rebuilt automatically in `_generated/`. Their source snapshot hash is included in the article. The numerical snapshot remains versioned and is not silently replaced with whatever local run happens to exist.
+
+The memory lifecycle, consolidation, LLM overflow, and roadmap illustrations are also rebuilt automatically. They are conceptual drawings, not measured results. Edit `diagrams.py` to change them; no diagram service, image-generation dependency, or network request is needed. Sphinx selects SVG for HTML and PDF for LaTeX. Both formats include a reading map/table of contents; equations, figure captions, and internal references share the same source.
 
 ## Extend after each experimental stage
 
@@ -61,4 +80,4 @@ The figure and tables are rebuilt automatically in `_generated/`. Their source s
 4. Remove the completed stage's prospective description from `roadmap.rst`. Update the abstract and discussion to reflect the evidence, including null results.
 5. Run `make check`, `make article-html`, and `make article`; inspect the PDF's equations, tables, figure, and references.
 
-After stage 6, replace the remaining roadmap with a synthesis across stages and finalize the author list, venue format, and reproducibility materials. Preserve the distinction between completed experiments and any future LLM or world-model application.
+The revised roadmap has nine stages. Stages 7 (world models) and 8 (LLM overflow) are distinct application branches; stage 9 extends the LLM reader. As stages are completed, update the status table and the coverage map as well as the abstract. Once the intended experimental scope is complete, replace its prospective roadmap with a synthesis and finalize authorship, venue format, and reproducibility materials. Preserve the distinction between completed experiments and remaining hypotheses throughout.
