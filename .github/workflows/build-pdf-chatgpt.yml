@@ -1,0 +1,37 @@
+name: Build article PDF (ChatGPT)
+
+on:
+  push:
+    branches:
+      - chatgpt-pdf-build-20260917
+  workflow_dispatch:
+
+jobs:
+  build-pdf:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Python documentation dependencies
+        run: python -m pip install --upgrade pip && python -m pip install -e '.[docs]'
+
+      - name: Install LaTeX toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y latexmk texlive-xetex texlive-latex-recommended texlive-latex-extra texlive-fonts-recommended fonts-lmodern
+
+      - name: Build Sphinx PDF
+        run: make article-pdf PYTHON=python
+
+      - name: Upload PDF
+        uses: actions/upload-artifact@v4
+        with:
+          name: vela-belief-pdf
+          path: docs/_build/latex/vela-belief.pdf
+          if-no-files-found: error
