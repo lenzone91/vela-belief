@@ -18,7 +18,7 @@ make article
 | Command | Output | Requirements |
 | --- | --- | --- |
 | `make article-html` | `docs/_build/html/index.html` | Sphinx and Matplotlib |
-| `make article-latex` | `docs/_build/latex/vela-belief.tex` and supporting files | Sphinx and Matplotlib |
+| `make article-latex` | `docs/_build/latex/vela-belief.tex`, supporting files, and `docs/_build/vela-belief-overleaf.zip` | Sphinx and Matplotlib |
 | `make article` | `docs/_build/latex/vela-belief.pdf` | The above, plus Tectonic |
 
 The Makefile uses `.venv/bin/python`. Override it with `PYTHON=python` if using another environment. Sphinx warnings fail the build. CI checks HTML and LaTeX generation; the PDF must also be compiled when changing article layout or LaTeX configuration.
@@ -45,6 +45,30 @@ If a full TeX Live installation with XeLaTeX and latexmk is already available, t
 .venv/bin/python -m sphinx -M latexpdf docs/paper docs/_build -W --keep-going -n
 ```
 
+## Import into Overleaf
+
+Run `make article-latex` (or `make article-latex PYTHON=python` in the Mamba
+environment). The build also creates `docs/_build/vela-belief-overleaf.zip`.
+
+1. In Overleaf, select **New Project > Upload Project** and upload that ZIP.
+2. Set **Main document** to `vela-belief.tex` and **Compiler** to **XeLaTeX**
+   in the project settings.
+3. Recompile.
+
+The archive places the LaTeX source, Sphinx styles, `latexmkrc`, and PDF figures
+at the project root. It excludes local compilation outputs, including the
+article PDF and logs. Overleaf needs no Python, Sphinx, or Tectonic setup.
+See Overleaf's [project upload instructions](https://docs.overleaf.com/managing-projects-and-files/uploading-a-project).
+
+Tables use `booktabs` without alternating row colours: Sphinx 8's `colorrows`
+style is incompatible with the updated `colortbl`/`array` packages in TeX Live
+2026 ([Sphinx issue #14465](https://github.com/sphinx-doc/sphinx/issues/14465)).
+If an older export fails with `TeX capacity exceeded` at `\sphinxmidrule`,
+upload a freshly generated archive and use **Recompile from scratch**.
+
+Keep permanent edits in the repository's RST sources and regenerate the archive;
+changes made to the generated LaTeX in Overleaf are not imported back into RST.
+
 ## Source structure
 
 | File | Purpose |
@@ -67,6 +91,7 @@ If a full TeX Live installation with XeLaTeX and latexmk is already available, t
 | `results.py` | Generate tables and a vector figure from `../stage1-results.json` |
 | `diagrams.py` | Generate four original conceptual diagrams as SVG and PDF |
 | `conf.py` | Sphinx settings and LaTeX article layout |
+| `overleaf.py` | Package LaTeX sources and figures into an Overleaf import ZIP |
 
 The figure and tables are rebuilt automatically in `_generated/`. Their source snapshot hash is included in the article. The numerical snapshot remains versioned and is not silently replaced with whatever local run happens to exist.
 

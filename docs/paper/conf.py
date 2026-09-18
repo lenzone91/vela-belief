@@ -26,6 +26,9 @@ latex_engine = "xelatex"
 latex_documents = [("index", "vela-belief.tex", project, author, "howto")]
 latex_domain_indices = False
 latex_show_urls = "footnote"
+# Sphinx 8's colorrows hooks recurse with TeX Live 2026's colortbl/array.
+# https://github.com/sphinx-doc/sphinx/issues/14465
+latex_table_style = ["booktabs"]
 latex_elements = {
     "papersize": "a4paper",
     "pointsize": "11pt",
@@ -54,4 +57,7 @@ def generate_results(app):
 
 
 def setup(app):
+    from overleaf import package_overleaf
+
     app.connect("builder-inited", generate_results)
+    app.connect("build-finished", package_overleaf)
